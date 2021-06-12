@@ -14,5 +14,12 @@
         <Button x:Name="CancelButton" Content="Cancel" HorizontalAlignment="Left" Margin="63,0,0,10" 
             Click="CancelButton_Click" Height="20" VerticalAlignment="Bottom"/>
 
+        <Grid>
+            <Label Content="Motor A Position:&#xD;&#xA;" Margin="623,10,75,0" Height="25"
+                VerticalAlignment="Top" VerticalContentAlignment="Center" RenderTransformOrigin="0.567,0.602"/>
+            <TextBox x:Name="_motorAPositionTextBox" Margin="730,10,10,0" Height="25" TextWrapping="Wrap" 
+                VerticalAlignment="Top" VerticalContentAlignment="Center"/>
+
+        </Grid>
     </Grid>
 </Window>

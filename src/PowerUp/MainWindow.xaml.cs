@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PowerUp.Helpers;
 using PowerUp.Lego;
+using PowerUp.Services;
 using SharpBrick.PoweredUp;
 
 namespace PowerUp
@@ -15,8 +16,8 @@ namespace PowerUp
     /// </summary>
     public partial class MainWindow : Window, IDisposable
     {
-        private IHost _poweredUpHost;
-        private CancellationTokenSource _cancelSource;
+        private IHost? _poweredUpHost;
+        private CancellationTokenSource? _cancelSource;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly ILogger<MainWindow> _logger;
 
@@ -57,8 +58,19 @@ namespace PowerUp
                     .AddWinRTBluetooth() // using WinRT Bluetooth on Windows (separate NuGet SharpBrick.PoweredUp.WinRT; others are available)
 
                     .AddHostedService<StartupTask>()
+                    .AddSingleton<MessageHub>()
+
                 )
                 .Build();
+
+            var messageHub = _poweredUpHost.Services.GetRequiredService<MessageHub>();
+            messageHub.Subscribe("MotorAPosition", data =>
+            {
+                _motorAPositionTextBox.Dispatch(textbox =>
+                {
+                    textbox.Text = data?.ToString();
+                });
+            });
 
             await _poweredUpHost.StartAsync(_cancelSource.Token);
 

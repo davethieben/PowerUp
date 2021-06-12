@@ -10,7 +10,7 @@ namespace PowerUp
     public partial class App : Application
     {
         private readonly IHost _host;
-        private MainWindow _mainWindow;
+        private MainWindow? _mainWindow;
 
         public App()
         {
