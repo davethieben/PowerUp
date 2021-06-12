@@ -5,10 +5,11 @@ namespace PowerUp.Lego
 {
     public static class LegoExtensions
     {
-        public static async Task ResetAsync(this TachoMotor motor)
+        public static async Task ResetAsync(this AbsoluteMotor motor)
         {
-            await motor.SetZeroAsync();
-            await motor.GotoPositionAsync(0, 100, 100, SpecialSpeed.Brake);
+            //await motor.SetZeroAsync();
+            //await motor.GotoPositionAsync(0, 100, 100, SpecialSpeed.Brake);
+
         }
 
 

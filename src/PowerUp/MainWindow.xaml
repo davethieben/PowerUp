@@ -7,9 +7,12 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <TextBox x:Name="OutputTextBox" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="724" Height="216"/>
-        <Button x:Name="ConnectButton" Content="Connect" HorizontalAlignment="Left" Margin="10,231,0,0" VerticalAlignment="Top" Click="ConnectButton_Click"/>
-        <Button x:Name="CancelButton" Content="Cancel" HorizontalAlignment="Left" Margin="63,231,0,0" VerticalAlignment="Top" Click="CancelButton_Click"/>
+        <TextBox x:Name="OutputTextBox" Margin="10,10,0,35" TextWrapping="Wrap" 
+            HorizontalAlignment="Left" Width="550"/>
+        <Button x:Name="ConnectButton" Content="Connect" HorizontalAlignment="Left" Margin="10,0,0,10" 
+            Click="ConnectButton_Click" Height="20" VerticalAlignment="Bottom"/>
+        <Button x:Name="CancelButton" Content="Cancel" HorizontalAlignment="Left" Margin="63,0,0,10" 
+            Click="CancelButton_Click" Height="20" VerticalAlignment="Bottom"/>
 
     </Grid>
 </Window>

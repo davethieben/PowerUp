@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,15 +13,17 @@ namespace PowerUp
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, IDisposable
     {
         private IHost _poweredUpHost;
         private CancellationTokenSource _cancelSource;
         private readonly IHostApplicationLifetime _lifetime;
+        private readonly ILogger<MainWindow> _logger;
 
-        public MainWindow(IHostApplicationLifetime lifetime)
+        public MainWindow(IHostApplicationLifetime lifetime, ILogger<MainWindow> logger)
         {
             _lifetime = lifetime;
+            _logger = logger;
 
             InitializeComponent();
         }
@@ -45,7 +48,7 @@ namespace PowerUp
                         logging.AddDebug();
                         logging.AddTextBox(OutputTextBox, _cancelSource.Token);
 
-                        logging.AddFilter("Microsoft", LogLevel.Warning);
+                        //logging.AddFilter("Microsoft", LogLevel.Warning);
                         logging.AddFilter("SharpBrick.PoweredUp.Bluetooth.BluetoothKernel", LogLevel.Information);
 
                     })
@@ -61,6 +64,8 @@ namespace PowerUp
 
             _cancelSource.Token.Register(() =>
             {
+                _logger.LogDebug("Cancel signalled, shutting down hosting...");
+
                 if (_poweredUpHost != null)
                 {
                     _poweredUpHost.StopAsync().ConfigureAwait(false);
@@ -73,11 +78,16 @@ namespace PowerUp
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
+            _logger.LogInformation("Attempting to Cancel connection...");
             if (_cancelSource != null)
             {
                 _cancelSource.Cancel();
             }
         }
-		
+
+        public void Dispose()
+        {
+            _poweredUpHost?.Dispose();
+        }
     }
 }

@@ -10,6 +10,7 @@ namespace PowerUp
     public partial class App : Application
     {
         private readonly IHost _host;
+        private MainWindow _mainWindow;
 
         public App()
         {
@@ -25,9 +26,17 @@ namespace PowerUp
 
         protected void OnStartup(object sender, StartupEventArgs e)
         {
-            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
-            mainWindow.Show();
+            _mainWindow = _host.Services.GetRequiredService<MainWindow>();
+            _mainWindow.Show();
         }
-		
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _mainWindow?.Dispose();
+            _host?.Dispose();
+
+            base.OnExit(e);
+        }
+
     }
 }
