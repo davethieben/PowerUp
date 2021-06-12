@@ -15,11 +15,20 @@
             Click="CancelButton_Click" Height="20" VerticalAlignment="Bottom"/>
 
         <Grid>
-            <Label Content="Motor A Position:&#xD;&#xA;" Margin="623,10,75,0" Height="25"
+            <Label Content="Motor A Position:&#xD;&#xA;" Margin="580,10,75,0" Height="25"
                 VerticalAlignment="Top" VerticalContentAlignment="Center" RenderTransformOrigin="0.567,0.602"/>
-            <TextBox x:Name="_motorAPositionTextBox" Margin="730,10,10,0" Height="25" TextWrapping="Wrap" 
+            <TextBox x:Name="MotorAPositionTextBox" Margin="730,10,10,0" Height="25" TextWrapping="Wrap" 
                 VerticalAlignment="Top" VerticalContentAlignment="Center"/>
 
+            <Label Content="Set:" VerticalContentAlignment="Center" 
+                Margin="580,45,75,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+                Height="25" Width="60" />
+            <TextBox x:Name="SetMotorAPositionTextBox" Text="" VerticalContentAlignment="Center"
+                Margin="0,45,80,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Height="25" Width="60"                  />
+            <Button x:Name="SetMotorAPositionButton" Content="Set"
+                Margin="0,45,10,0" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Height="25" Width="60" Click="SetMotorAPositionButton_Click" />
         </Grid>
     </Grid>
 </Window>

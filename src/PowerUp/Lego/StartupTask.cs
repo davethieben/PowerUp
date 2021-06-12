@@ -11,21 +11,18 @@ namespace PowerUp.Lego
 {
     public class StartupTask : BackgroundService
     {
-        private readonly PoweredUpHost _poweredUp;
-        private readonly IHostApplicationLifetime _taskLifetime;
+        private readonly PoweredUpHub _poweredUp;
         private readonly MessageHub _messageHub;
         private readonly IOptions<PoweredUpOptions> _options;
         private readonly ILogger<StartupTask> _logger;
 
         public StartupTask(
-            PoweredUpHost poweredUp,
-            IHostApplicationLifetime taskLifetime,
+            PoweredUpHub poweredUp,
             MessageHub messageHub,
             IOptions<PoweredUpOptions> options,
             ILogger<StartupTask> logger)
         {
             _poweredUp = poweredUp;
-            _taskLifetime = taskLifetime;
             _messageHub = messageHub;
             _options = options;
             _logger = logger;
@@ -40,81 +37,79 @@ namespace PowerUp.Lego
 
             _logger.LogInformation("Waiting to discover...");
 
-            TechnicMediumHub technicMediumHub = await _poweredUp.DiscoverAsync<TechnicMediumHub>(stopToken);
-            using (var hub = new PoweredUpHub(technicMediumHub))
+
+            // add this when you are interested in a tracing of the message ("human readable")
+            if (_options.Value.EnableTracing)
             {
-                // add this when you are interested in a tracing of the message ("human readable")
-                if (_options.Value.EnableTracing)
+                await _poweredUp.EnableTracingAsync();
+            }
+
+            stopToken.ThrowIfCancellationRequested();
+
+            await _poweredUp.ConnectAsync();
+
+            //_logger.LogInformation($"{hub.AdvertisingName}: Port A - {hub.A.DeviceType} - attached: {hub.A.IsDeviceAttached}");
+            //_logger.LogInformation($"{hub.AdvertisingName}: Port B - {hub.B.DeviceType} - attached: {hub.B.IsDeviceAttached}");
+            //_logger.LogInformation($"{hub.AdvertisingName}: Port C - {hub.C.DeviceType} - attached: {hub.C.IsDeviceAttached}");
+            //_logger.LogInformation($"{hub.AdvertisingName}: Port D - {hub.D.DeviceType} - attached: {hub.D.IsDeviceAttached}");
+
+            stopToken.ThrowIfCancellationRequested();
+
+            //await hub.TiltSensor.SetupNotificationAsync(hub.TiltSensor.ModeIndexPosition, true);
+            //hub.TiltSensor.PositionObservable.Subscribe(v =>
+            //{
+            //    //_logger.LogDebug($"Subscribe TiltSensor.Position: {v.x}, {v.y}, {v.z}");
+            //});
+
+            await _poweredUp.SetColorAsync(PoweredUpColor.Green);
+
+            PoweredUpMotor? motorA = await _poweredUp.GetMotorAsync(PoweredUpHub.PortA);
+            if (motorA != null)
+            {
+                await motorA.SubscribePositionAsync(pos =>
                 {
-                    await hub.EnableTracingAsync();
-                }
+                    _logger.LogDebug($"PoweredUpMotor:A Position: {pos}");
+                    _messageHub.Publish("MotorAPosition", pos);
+                });
+
+                _messageHub.Subscribe<short>("SetMotorAPosition", async (pos) =>
+                {
+                    await motorA.SetPositionAsync(pos);
+                });
 
                 stopToken.ThrowIfCancellationRequested();
 
-                await hub.ConnectAsync();
+                _logger.LogDebug($"____ Resetting");
+                var waitBetween = TimeSpan.FromMilliseconds(2000);
 
-                //_logger.LogInformation($"{hub.AdvertisingName}: Port A - {hub.A.DeviceType} - attached: {hub.A.IsDeviceAttached}");
-                //_logger.LogInformation($"{hub.AdvertisingName}: Port B - {hub.B.DeviceType} - attached: {hub.B.IsDeviceAttached}");
-                //_logger.LogInformation($"{hub.AdvertisingName}: Port C - {hub.C.DeviceType} - attached: {hub.C.IsDeviceAttached}");
-                //_logger.LogInformation($"{hub.AdvertisingName}: Port D - {hub.D.DeviceType} - attached: {hub.D.IsDeviceAttached}");
+                await Goto(0);
 
-                stopToken.ThrowIfCancellationRequested();
+                await Goto(20);
 
-                //await hub.TiltSensor.SetupNotificationAsync(hub.TiltSensor.ModeIndexPosition, true);
-                //hub.TiltSensor.PositionObservable.Subscribe(v =>
-                //{
-                //    //_logger.LogDebug($"Subscribe TiltSensor.Position: {v.x}, {v.y}, {v.z}");
-                //});
+                await Goto(-20);
 
-                await hub.SetColorAsync(PoweredUpColor.Green);
+                await Goto(20);
 
-                PoweredUpMotor? motor = await hub.GetMotorAsync(PoweredUpHub.PortA);
-                if (motor != null)
+                await Goto(-20);
+
+
+                async Task Goto(int pos)
                 {
-                    await motor.SubscribePositionAsync(pos =>
+                    if (motorA.IsConnected)
                     {
-                        _logger.LogDebug($"PoweredUpMotor Position: {pos}");
-                        _messageHub.Publish("MotorAPosition", pos.ToString());
-                    });
+                        _logger.LogDebug($"_____ Goto: {pos}     (from: {motorA.Position})");
+                        await motorA.SetPositionAsync(pos);
+                        _logger.LogDebug($"AbsolutePosition1: {motorA.Position}");
 
-                    stopToken.ThrowIfCancellationRequested();
-
-                    _logger.LogDebug($"____ Resetting");
-                    var waitBetween = TimeSpan.FromMilliseconds(2000);
-
-                    await Goto(0);
-
-                    await Goto(20);
-
-                    await Goto(-20);
-
-                    await Goto(20);
-
-                    await Goto(-20);
-
-
-                    async Task Goto(int pos)
-                    {
-                        if (motor.IsConnected)
-                        {
-                            _logger.LogDebug($"_____ Goto: {pos}     (from: {motor.Position})");
-                            await motor.GotoPositionAsync(pos);
-                            _logger.LogDebug($"AbsolutePosition1: {motor.Position}");
-
-                            await Task.Delay(waitBetween);
-                            _logger.LogDebug($"AbsolutePosition2: {motor.Position}");
-                        }
+                        await Task.Delay(waitBetween);
+                        _logger.LogDebug($"AbsolutePosition2: {motorA.Position}");
                     }
-
                 }
 
-
-                await hub.DisconnectAsync();
 
                 _logger.LogDebug($"Startup Task Done");
             }
 
-            _taskLifetime.StopApplication();
         }
 
     }

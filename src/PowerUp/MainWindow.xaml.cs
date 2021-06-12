@@ -57,18 +57,20 @@ namespace PowerUp
                     .AddPoweredUp()
                     .AddWinRTBluetooth() // using WinRT Bluetooth on Windows (separate NuGet SharpBrick.PoweredUp.WinRT; others are available)
 
-                    .AddHostedService<StartupTask>()
+                    .AddSingleton<PoweredUpHub>()
                     .AddSingleton<MessageHub>()
+
+                    .AddHostedService<StartupTask>()
 
                 )
                 .Build();
 
             var messageHub = _poweredUpHost.Services.GetRequiredService<MessageHub>();
-            messageHub.Subscribe("MotorAPosition", data =>
+            messageHub.Subscribe<short>("MotorAPosition", data =>
             {
-                _motorAPositionTextBox.Dispatch(textbox =>
+                MotorAPositionTextBox.Dispatch(textbox =>
                 {
-                    textbox.Text = data?.ToString();
+                    textbox.Text = data.ToString();
                 });
             });
 
@@ -88,18 +90,41 @@ namespace PowerUp
 
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        private async void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             _logger.LogInformation("Attempting to Cancel connection...");
             if (_cancelSource != null)
             {
                 _cancelSource.Cancel();
             }
+
+            if (_poweredUpHost != null)
+            {
+                await _poweredUpHost.StopAsync();
+                _poweredUpHost.Dispose();
+                _poweredUpHost = null;
+            }
+
+            if (_cancelSource != null)
+            {
+                _cancelSource.Dispose();
+                _cancelSource = null;
+            }
         }
 
         public void Dispose()
         {
             _poweredUpHost?.Dispose();
+        }
+
+        private void SetMotorAPositionButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_poweredUpHost != null &&
+                short.TryParse(SetMotorAPositionTextBox.Text, out short setPosition))
+            {
+                var messageHub = _poweredUpHost.Services.GetRequiredService<MessageHub>();
+                messageHub.Publish("SetMotorAPosition", setPosition);
+            }
         }
     }
 }

@@ -27,10 +27,12 @@ namespace PowerUp.Services
             });
         }
 
-        public void Subscribe(string eventName, Action<object> callback)
+        public void Subscribe<T>(string eventName, Action<T> callback)
         {
+            callback.IsRequired();
+
             _subscriptions.GetOrAdd(eventName)
-                .Add(callback);
+                .Add(payload => callback.Invoke((T)payload));
         }
     }
 }

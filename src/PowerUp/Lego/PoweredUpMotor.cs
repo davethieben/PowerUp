@@ -34,7 +34,7 @@ namespace PowerUp.Lego
             }
         }
 
-        public async Task GotoPositionAsync(int position, int? speed = null, int? power = null)
+        public async Task SetPositionAsync(int position, int? speed = null, int? power = null)
         {
             PortFeedback feedback = await _motor.GotoPositionAsync(position,
                 (sbyte)(speed ?? DefaultSpeed),

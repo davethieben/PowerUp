@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Essentials;
 using Microsoft.Extensions.DependencyInjection;
 using SharpBrick.PoweredUp;
 using SharpBrick.PoweredUp.Functions;
@@ -14,45 +13,57 @@ namespace PowerUp.Lego
         public static readonly short PortC = 2;
         public static readonly short PortD = 3;
 
-        private readonly TechnicMediumHub _hub;
+        private readonly PoweredUpHost _host;
+        private TechnicMediumHub? _hub;
 
-        public PoweredUpHub(TechnicMediumHub hub)
+        public PoweredUpHub(PoweredUpHost host)
         {
-            _hub = hub.IsRequired();
+            _host = host;
         }
 
         public async Task EnableTracingAsync()
         {
-            TraceMessages tracer = _hub.ServiceProvider.GetRequiredService<TraceMessages>();
+            TraceMessages tracer = _host.ServiceProvider.GetRequiredService<TraceMessages>();
             await tracer.ExecuteAsync();
         }
 
-        public async Task ConnectAsync()
+        public async Task<TechnicMediumHub> ConnectAsync()
         {
-            if (_hub.PrimaryMacAddress == null)
+            if (_hub == null)
             {
-                await _hub.ConnectAsync();
+                _hub = await _host.DiscoverAsync<TechnicMediumHub>();
+                if (_hub.PrimaryMacAddress == null)
+                {
+                    await _hub.ConnectAsync();
+                }
 
                 if (!_hub.IsConnected)
                     throw new ApplicationException("Could not connect");
             }
+
+            return _hub;
         }
 
         public async Task DisconnectAsync()
         {
-            await _hub.DisconnectAsync();
+            if (_hub != null)
+            {
+                await _hub.DisconnectAsync();
+                _hub.Dispose();
+                _hub = null;
+            }
         }
 
         public async Task SetColorAsync(PoweredUpColor color)
         {
-            await ConnectAsync();
+            _hub = await ConnectAsync();
 
             await _hub.RgbLight.SetRgbColorNoAsync(color);
         }
 
         public async Task<PoweredUpMotor?> GetMotorAsync(short port)
         {
-            await ConnectAsync();
+            _hub = await ConnectAsync();
 
             //var motor = _hub.A.GetDevice<TechnicXLargeLinearMotor>();
             var device = _hub.Port((byte)port).GetDevice<IPoweredUpDevice>();
